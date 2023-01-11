@@ -16,7 +16,7 @@ inputs:
     required: false
     type: boolean
   discourse_host:
-    description: The discourse host name.
+    description: The base path(hostname) to the discourse server.
     required: true
     type: string
   discourse_api_username:
@@ -34,6 +34,12 @@ inputs:
     default: 41
     required: false
     type: integer
+  github_token:
+    description: |
+      The github access token (secrets.GITHUB_TOKEN) to create pull request on Github.
+      Required if running in migration mode.
+    required: false
+    type: string
 outputs:
   urls_with_actions:
     description: |

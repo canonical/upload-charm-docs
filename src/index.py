@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .discourse import Discourse
 from .exceptions import DiscourseError, ServerError
+from .reconcile import NAVIGATION_TABLE_START
 from .types_ import Index, IndexFile, Metadata, Page
 
 DOCUMENTATION_FOLDER_NAME = "docs"
@@ -64,3 +65,16 @@ def get(metadata: Metadata, base_path: Path, server_client: Discourse) -> Index:
     )
 
     return Index(server=server, local=local, name=name_value)
+
+
+def contents_from_page(page: str) -> str:
+    """Get index file contents from server page.
+
+    Args:
+        page: Page contents from server.
+
+    Returns:
+        Index file contents.
+    """
+    contents = page.split(NAVIGATION_TABLE_START)
+    return contents[0]

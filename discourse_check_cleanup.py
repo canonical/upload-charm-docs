@@ -34,7 +34,7 @@ class Action(str, Enum):
     CLEANUP = "cleanup"
 
 
-def main():
+def main() -> None:
     """Clean up created Discourse pages.
 
     Raises:

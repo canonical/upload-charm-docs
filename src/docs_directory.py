@@ -9,6 +9,7 @@ from itertools import count
 from pathlib import Path
 
 from . import types_
+from .index import DOCUMENTATION_FOLDER_NAME
 
 
 def _get_directories_files(docs_path: Path) -> list[Path]:
@@ -41,7 +42,7 @@ def _calculate_level(path_relative_to_docs: Path) -> types_.Level:
     return len(path_relative_to_docs.parents)
 
 
-def _calculate_table_path(path_relative_to_docs: Path) -> types_.TablePath:
+def calculate_table_path(path_relative_to_docs: Path) -> types_.TablePath:
     """Calculate the table path of a path.
 
     Args:
@@ -103,7 +104,7 @@ def _get_path_info(path: Path, alphabetical_rank: int, docs_path: Path) -> types
     return types_.PathInfo(
         local_path=path,
         level=_calculate_level(path_relative_to_docs=path_relative_to_docs),
-        table_path=_calculate_table_path(path_relative_to_docs=path_relative_to_docs),
+        table_path=calculate_table_path(path_relative_to_docs=path_relative_to_docs),
         navlink_title=_calculate_navlink_title(path=path),
         alphabetical_rank=alphabetical_rank,
     )
@@ -134,3 +135,15 @@ def read(docs_path: Path) -> typing.Iterator[types_.PathInfo]:
         _get_directories_files(docs_path=docs_path),
         count(),
     )
+
+
+def has_docs_directory(base_path: Path) -> bool:
+    """Return existence of docs directory from base path.
+
+    Args:
+        base_path: Base path of the repository to search the docs directory from
+
+    Returns:
+        True if documentation folder exists, False otherwise
+    """
+    return (base_path / DOCUMENTATION_FOLDER_NAME).is_dir()

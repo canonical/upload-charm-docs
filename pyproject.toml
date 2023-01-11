@@ -18,7 +18,7 @@ show_missing = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 log_cli_level = "INFO"
-markers = ["init", "discourse"]
+markers = ["reconcile", "migrate", "discourse"]
 
 # Formatting tools configuration
 [tool.black]
@@ -49,3 +49,9 @@ copyright-regexp = "Copyright\\s\\d{4}([-,]\\d{4})*\\s+%(author)s"
 
 [tool.mypy]
 ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false

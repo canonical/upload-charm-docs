@@ -115,3 +115,45 @@ def test_get_metadata_yaml_retrieve_empty(tmp_path: Path):
     assert returned_index.local.title == "Name 1 Documentation Overview"
     assert returned_index.local.content is None
     assert returned_index.name == name
+
+
+# Pylint doesn't understand how the walrus operator works
+# pylint: disable=undefined-variable,unused-variable
+@pytest.mark.parametrize(
+    "page, expected_content",
+    [
+        pytest.param(
+            index.NAVIGATION_TABLE_START,
+            "",
+            id="navigation table only",
+        ),
+        pytest.param(
+            (content := "Page content"),
+            content,
+            id="page content only",
+        ),
+        pytest.param(
+            (multiline_content := "Page content\nWithMultiline"),
+            multiline_content,
+            id="multiline content only",
+        ),
+        pytest.param(
+            f"{(content := 'Page content')}{index.NAVIGATION_TABLE_START}",
+            content,
+            id="page with content and navigation table",
+        ),
+        pytest.param(
+            f"{(content := 'page content')}{index.NAVIGATION_TABLE_START}\ncontent-afterwards",
+            content,
+            id="page with content after the navigation table",
+        ),
+    ],
+)
+# pylint: enable=undefined-variable,unused-variable
+def test_get_contents_from_page(page: str, expected_content: str):
+    """
+    arrange: given an index page from server
+    act: when contents_from_page is called
+    assert: contents without navigation table is returned.
+    """
+    assert index.contents_from_page(page=page) == expected_content

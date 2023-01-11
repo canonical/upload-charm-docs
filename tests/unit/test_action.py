@@ -50,7 +50,7 @@ def test__create_directory(dry_run: bool, caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink.title == navlink_title
     assert returned_report.table_row.navlink.link is None
-    assert returned_report.url is None
+    assert returned_report.location is None
     assert (
         returned_report.result == src_types.ActionResult.SKIP
         if dry_run
@@ -86,7 +86,7 @@ def test__create_file_dry_run(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink.title == navlink_title
     assert returned_report.table_row.navlink.link == action.DRY_RUN_NAVLINK_LINK
-    assert returned_report.url == action.DRY_RUN_NAVLINK_LINK
+    assert returned_report.location == action.DRY_RUN_NAVLINK_LINK
     assert returned_report.result == src_types.ActionResult.SKIP
     assert returned_report.reason == action.DRY_RUN_REASON
 
@@ -121,7 +121,7 @@ def test__create_file_fail(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink.title == navlink_title
     assert returned_report.table_row.navlink.link == action.FAIL_NAVLINK_LINK
-    assert returned_report.url == action.FAIL_NAVLINK_LINK
+    assert returned_report.location == action.FAIL_NAVLINK_LINK
     assert returned_report.result == src_types.ActionResult.FAIL
     assert returned_report.reason == str(error)
 
@@ -156,12 +156,12 @@ def test__create_file(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink.title == navlink_title
     assert returned_report.table_row.navlink.link == url
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
 
-# Pylint diesn't understand how the walrus operator works
+# Pylint doesn't understand how the walrus operator works
 # pylint: disable=undefined-variable,unused-variable
 @pytest.mark.parametrize(
     "noop_action, expected_table_row",
@@ -208,7 +208,7 @@ def test__noop(
 
     assert str(noop_action) in caplog.text
     assert returned_report.table_row == expected_table_row
-    assert returned_report.url == (
+    assert returned_report.location == (
         absolute_url if expected_table_row.navlink.link is not None else None
     )
     assert returned_report.result == src_types.ActionResult.SUCCESS
@@ -251,7 +251,7 @@ def test__update_directory(dry_run: bool, caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.level == level
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink == update_action.navlink_change.new
-    assert returned_report.url is None
+    assert returned_report.location is None
     assert (
         returned_report.result == src_types.ActionResult.SKIP
         if dry_run
@@ -291,7 +291,7 @@ def test__update_file_dry_run(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.level == level
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink == update_action.navlink_change.new
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SKIP
     assert returned_report.reason == action.DRY_RUN_REASON
 
@@ -328,7 +328,7 @@ def test__update_file_navlink_title_change(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.level == level
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink == update_action.navlink_change.new
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -369,7 +369,7 @@ def test__update_file_navlink_content_change_discourse_error(caplog: pytest.LogC
     assert returned_report.table_row.level == level
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink == update_action.navlink_change.new
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.FAIL
     assert returned_report.reason == str(error)
 
@@ -408,7 +408,7 @@ def test__update_file_navlink_content_change(caplog: pytest.LogCaptureFixture):
     assert returned_report.table_row.level == level
     assert returned_report.table_row.path == path
     assert returned_report.table_row.navlink == update_action.navlink_change.new
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -501,7 +501,7 @@ def test__delete_not_delete(
     assert f"delete pages: {delete_pages}" in caplog.text
     mocked_discourse.delete_topic.assert_not_called()
     assert returned_report.table_row is None
-    assert returned_report.url == (url if navlink_link else None)
+    assert returned_report.location == (url if navlink_link else None)
     assert returned_report.result == expected_result
     assert returned_report.reason == expected_reason
 
@@ -536,7 +536,7 @@ def test__delete_error(caplog: pytest.LogCaptureFixture):
     assert f"delete pages: {True}" in caplog.text
     mocked_discourse.delete_topic.assert_called_once_with(url=link)
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.FAIL
     assert returned_report.reason == str(error)
 
@@ -570,7 +570,7 @@ def test__delete(caplog: pytest.LogCaptureFixture):
     assert f"delete pages: {True}" in caplog.text
     mocked_discourse.delete_topic.assert_called_once_with(url=link)
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -694,7 +694,7 @@ def test__run_index_dry_run(
     mocked_discourse.create_topic.assert_not_called()
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is None
-    assert returned_report.url == expected_url
+    assert returned_report.location == expected_url
     assert returned_report.result == src_types.ActionResult.SKIP
     assert returned_report.reason == action.DRY_RUN_REASON
 
@@ -722,7 +722,7 @@ def test__run_index_create_error(caplog: pytest.LogCaptureFixture):
     assert f"report: {returned_report}" in caplog.text
     mocked_discourse.create_topic.assert_called_once_with(title=title, content=content)
     assert returned_report.table_row is None
-    assert returned_report.url == action.FAIL_NAVLINK_LINK
+    assert returned_report.location == action.FAIL_NAVLINK_LINK
     assert returned_report.result == src_types.ActionResult.FAIL
     assert returned_report.reason == str(error)
 
@@ -750,7 +750,7 @@ def test__run_index_create(caplog: pytest.LogCaptureFixture):
     assert f"report: {returned_report}" in caplog.text
     mocked_discourse.create_topic.assert_called_once_with(title=title, content=content)
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -776,7 +776,7 @@ def test__run_index_noop(caplog: pytest.LogCaptureFixture):
     mocked_discourse.create_topic.assert_not_called()
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -804,7 +804,7 @@ def test__run_index_update_error(caplog: pytest.LogCaptureFixture):
     assert f"report: {returned_report}" in caplog.text
     mocked_discourse.update_topic.assert_called_once_with(url=url, content=content)
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.FAIL
     assert returned_report.reason == str(error)
 
@@ -831,7 +831,7 @@ def test__run_index_update(caplog: pytest.LogCaptureFixture):
     assert f"report: {returned_report}" in caplog.text
     mocked_discourse.update_topic.assert_called_once_with(url=url, content=content)
     assert returned_report.table_row is None
-    assert returned_report.url == url
+    assert returned_report.location == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
     assert returned_report.reason is None
 
@@ -856,7 +856,7 @@ def test__run_index_update(caplog: pytest.LogCaptureFixture):
             [
                 src_types.ActionReport(
                     table_row=src_types.TableRow(level=level, path=path, navlink=navlink),
-                    url=link,
+                    location=link,
                     result=src_types.ActionResult.SUCCESS,
                     reason=None,
                 )
@@ -885,13 +885,13 @@ def test__run_index_update(caplog: pytest.LogCaptureFixture):
             [
                 src_types.ActionReport(
                     table_row=src_types.TableRow(level=level_1, path=path_1, navlink=navlink_1),
-                    url=link_1,
+                    location=link_1,
                     result=src_types.ActionResult.SUCCESS,
                     reason=None,
                 ),
                 src_types.ActionReport(
                     table_row=src_types.TableRow(level=level_2, path=path_2, navlink=navlink_2),
-                    url=link_2,
+                    location=link_2,
                     result=src_types.ActionResult.SUCCESS,
                     reason=None,
                 ),
@@ -926,7 +926,7 @@ def test_run_all(
 
     expected_reports.append(
         src_types.ActionReport(
-            table_row=None, url=url, result=src_types.ActionResult.SUCCESS, reason=None
+            table_row=None, location=url, result=src_types.ActionResult.SUCCESS, reason=None
         )
     )
     assert returned_reports == expected_reports

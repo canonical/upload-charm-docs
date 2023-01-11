@@ -10,6 +10,32 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
+@dataclasses.dataclass
+class UserInputs:
+    """Configurable user input values used to run upload-charm-docs.
+
+    Attrs:
+        discourse_hostname: The base path to the discourse server.
+        discourse_category_id: The category identifier to use on discourse for all topics.
+        discourse_api_username: The discourse API username to use for interactions with the server.
+        discourse_api_key: The discourse API key to use for interactions with the server.
+        dry_run: If enabled, only log the action that would be taken. Has no effect in migration
+            mode.
+        delete_pages: Whether to delete pages that are no longer needed. Has no effect in
+            migration mode.
+        github_access_token: A Personal Access Token(PAT) or access token with repository access.
+            Required in migration mode.
+    """
+
+    discourse_hostname: str
+    discourse_category_id: str
+    discourse_api_username: str
+    discourse_api_key: str
+    dry_run: bool
+    delete_pages: bool
+    github_access_token: str | None
+
+
 class Metadata(typing.NamedTuple):
     """Information within metadata file. Refer to: https://juju.is/docs/sdk/metadata-yaml.
 
@@ -307,13 +333,60 @@ class ActionReport(typing.NamedTuple):
 
     Attrs:
         table_row: The navigation table entry, None for delete or index actions.
-        url: The URL that the action operated on, None for groups or if a create action was
-            skipped.
+        location: The URL that the action operated on, None for groups or if a create action was
+            skipped, if running in reconcile mode.
+            Path to migrated file, if running in migration mode. None on action failure.
         result: The action execution result.
         reason: The reason, None for success reports.
     """
 
     table_row: TableRow | None
-    url: Url | None
+    location: Url | Path | None
     result: ActionResult
     reason: str | None
+
+
+@dataclasses.dataclass
+class MigrationFileMeta:
+    """Metadata about a document to be migrated.
+
+    Attrs:
+        path: The full document path to be written to.
+    """
+
+    path: Path
+
+
+@dataclasses.dataclass
+class GitkeepMeta(MigrationFileMeta):
+    """Represents an empty directory from the index table.
+
+    Attrs:
+        table_row: Empty group row that is the source of .gitkeep file.
+    """
+
+    table_row: TableRow
+
+
+@dataclasses.dataclass
+class DocumentMeta(MigrationFileMeta):
+    """Represents a document to be migrated from the index table.
+
+    Attrs:
+        link: Link to content to read from.
+        table_row: Document row that is the source of document file.
+    """
+
+    link: str
+    table_row: TableRow
+
+
+@dataclasses.dataclass
+class IndexDocumentMeta(MigrationFileMeta):
+    """Represents an index file document.
+
+    Attrs:
+        content: Contents to write to index file.
+    """
+
+    content: str

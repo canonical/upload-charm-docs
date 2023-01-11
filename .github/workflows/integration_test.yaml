@@ -9,7 +9,7 @@ jobs:
     secrets: inherit
     with:
       pre-run-script: tests/integration/pre_run.sh
-      modules: '["discourse", "init"]'
+      modules: '["discourse", "reconcile", "migrate"]'
   self-tests:
     runs-on: ubuntu-22.04
     steps:
@@ -55,7 +55,7 @@ jobs:
         run: echo '${{ steps.selfTestDraft.outputs.urls_with_actions }}'
       - name: Check draft
         run: |
-          sudo apt update && sudo apt install python3-pip
+          sudo apt update && sudo apt install python3-pip git
           pip3 install -r requirements.txt
           ./discourse_check_cleanup.py --action check-draft --action-kwargs '{"expected_url_results": []}' '${{ steps.selfTestDraft.outputs.urls_with_actions }}' '${{ steps.selfTestDraft.outputs.discourse_config }}'
       - name: Create self test

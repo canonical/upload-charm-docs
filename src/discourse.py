@@ -418,7 +418,7 @@ class Discourse:
 
 
 def create_discourse(
-    hostname: typing.Any, category_id: typing.Any, api_username: typing.Any, api_key: typing.Any
+    hostname: str, category_id: str, api_username: str, api_key: str
 ) -> Discourse:
     """Create discourse client.
 
@@ -437,8 +437,6 @@ def create_discourse(
         is not an integer or a string that can be converted to an integer.
 
     """
-    if not isinstance(hostname, str):
-        raise InputError(f"Invalid 'discourse_host' input, it must be a string, got {hostname=!r}")
     if not hostname:
         raise InputError(
             f"Invalid 'discourse_host' input, it must be non-empty, got {hostname=!r}"
@@ -450,31 +448,22 @@ def create_discourse(
             f"got {hostname=!r}"
         )
 
-    if not isinstance(category_id, int) and not (
-        isinstance(category_id, str) and category_id.isdigit()
-    ):
+    if not category_id:
+        raise InputError(
+            f"Invalid 'discourse_category_id' input, it must be non-empty, got {category_id=!r}"
+        )
+    if not category_id.isdigit():
         raise InputError(
             "Invalid 'discourse_category_id' input, it must be an integer or a string that can be "
             f"converted to an integer, got {category_id=!r}"
         )
-    if isinstance(category_id, str):
-        category_id_int = int(category_id)
-    else:
-        category_id_int = category_id
+    category_id_int = int(category_id)
 
-    if not isinstance(api_username, str):
-        raise InputError(
-            f"Invalid 'discourse_api_username' input, it must be a string, got {api_username=!r}"
-        )
     if not api_username:
         raise InputError(
             f"Invalid 'discourse_api_username' input, it must be non-empty, got {api_username=!r}"
         )
 
-    if not isinstance(api_key, str):
-        raise InputError(
-            f"Invalid 'discourse_api_key' input, it must be a string, got {api_key=!r}"
-        )
     if not api_key:
         raise InputError(
             f"Invalid 'discourse_api_key' input, it must be non-empty, got {api_key=!r}"

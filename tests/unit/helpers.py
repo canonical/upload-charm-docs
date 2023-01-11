@@ -31,3 +31,15 @@ def assert_substrings_in_string(substrings: typing.Iterable[str], string: str) -
     """
     for substring in substrings:
         assert substring in string  # nosec
+
+
+def path_to_markdown(path: Path) -> Path:
+    """Generate markdown file from path.
+
+    Args:
+        path: The path to be converted into markdown path.
+
+    Returns:
+        Path with last path being a markdown file.
+    """
+    return Path(f"{path}.md")

@@ -34,3 +34,11 @@ class ReconcilliationError(BaseError):
 
 class ActionError(BaseError):
     """A problem with the taking an action occurred."""
+
+
+class MigrationError(BaseError):
+    """A problem with migration occurred."""
+
+
+class RepositoryClientError(BaseError):
+    """A problem with git repository client occurred."""

@@ -432,15 +432,15 @@ def path_info_mkdir(path_info: types_.PathInfo, base_dir: Path) -> types_.PathIn
             factories.PathInfoFactory(
                 table_path=(path := "path 1"), navlink_title=(title := "title 1")
             ),
-            types_.TableRow(level=1, path=path, navlink=types_.Navlink(title=title, link=None)),
+            factories.TableRowFactory(
+                level=1, path=path, navlink=types_.Navlink(title=title, link=None)
+            ),
             types_.NoopAction,
             id="path info defined table row defined",
         ),
         pytest.param(
             None,
-            types_.TableRow(
-                level=1, path="path 1", navlink=types_.Navlink(title="title 1", link=None)
-            ),
+            factories.TableRowFactory(level=1, navlink=types_.Navlink(title=title, link=None)),
             types_.DeleteAction,
             id="path info None table row defined",
         ),
@@ -510,11 +510,7 @@ def test__calculate_action(
         ),
         pytest.param(
             (),
-            (
-                table_row_1 := types_.TableRow(
-                    level=1, path="path 1", navlink=types_.Navlink(title="title 1", link=None)
-                ),
-            ),
+            (table_row_1 := factories.TableRowFactory(level=1, path="path 1", is_group=True),),
             (types_.DeleteAction,),
             ((table_row_1.level, table_row_1.path),),
             id="empty path infos single table row",
@@ -522,12 +518,8 @@ def test__calculate_action(
         pytest.param(
             (),
             (
-                table_row_1 := types_.TableRow(
-                    level=1, path="path 1", navlink=types_.Navlink(title="title 1", link=None)
-                ),
-                table_row_2 := types_.TableRow(
-                    level=2, path="path 2", navlink=types_.Navlink(title="title 2", link=None)
-                ),
+                table_row_1 := factories.TableRowFactory(level=1, path="path 1", is_group=True),
+                table_row_2 := factories.TableRowFactory(level=2, path="path 2", is_group=True),
             ),
             (types_.DeleteAction, types_.DeleteAction),
             ((table_row_1.level, table_row_1.path), (table_row_2.level, table_row_2.path)),
@@ -536,7 +528,7 @@ def test__calculate_action(
         pytest.param(
             (path_info_1 := factories.PathInfoFactory(),),
             (
-                types_.TableRow(
+                factories.TableRowFactory(
                     level=path_info_1.level,
                     path=path_info_1.table_path,
                     navlink=types_.Navlink(title=path_info_1.navlink_title, link=None),
@@ -549,10 +541,8 @@ def test__calculate_action(
         pytest.param(
             (path_info_1 := factories.PathInfoFactory(level=1),),
             (
-                table_row_1 := types_.TableRow(
-                    level=2,
-                    path=path_info_1.table_path,
-                    navlink=types_.Navlink(title=title, link=None),
+                table_row_1 := factories.TableRowFactory(
+                    level=2, path=path_info_1.table_path, is_group=True
                 ),
             ),
             (types_.CreateAction, types_.DeleteAction),
@@ -565,10 +555,8 @@ def test__calculate_action(
         pytest.param(
             (path_info_1 := factories.PathInfoFactory(table_path="path 1"),),
             (
-                table_row := types_.TableRow(
-                    level=path_info_1.level,
-                    path="path 2",
-                    navlink=types_.Navlink(title=path_info_1.navlink_title, link=None),
+                table_row := factories.TableRowFactory(
+                    level=path_info_1.level, path="path 2", is_group=True
                 ),
             ),
             (types_.CreateAction, types_.DeleteAction),
@@ -648,13 +636,7 @@ def test_run(
                 ),
                 name="name 1",
             ),
-            (
-                table_row := types_.TableRow(
-                    level=1,
-                    path="path 1",
-                    navlink=types_.Navlink(title="navlink title 1", link=None),
-                ),
-            ),
+            (table_row := factories.TableRowFactory(level=1),),
             types_.CreateIndexAction(
                 title=local_title,
                 content=(
@@ -673,16 +655,8 @@ def test_run(
                 name="name 1",
             ),
             (
-                table_row_1 := types_.TableRow(
-                    level=1,
-                    path="path 1",
-                    navlink=types_.Navlink(title="navlink title 1", link=None),
-                ),
-                table_row_2 := types_.TableRow(
-                    level=2,
-                    path="path 2",
-                    navlink=types_.Navlink(title="navlink title 2", link=None),
-                ),
+                table_row_1 := factories.TableRowFactory(level=1),
+                table_row_2 := factories.TableRowFactory(level=2),
             ),
             types_.CreateIndexAction(
                 title=local_title,

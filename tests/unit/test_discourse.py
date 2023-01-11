@@ -692,19 +692,14 @@ def test_absolute_url(base_path: str, discourse: Discourse):
     "kwargs, expected_error_msg_contents",
     [
         pytest.param(
-            {"hostname": None, "category_id": 1, "api_username": "user 1", "api_key": "key 1"},
-            ("invalid", "'discourse_host'", "string", f"{None!r}"),
-            id="hostname is not string",
-        ),
-        pytest.param(
-            {"hostname": "", "category_id": 1, "api_username": "user 1", "api_key": "key 1"},
+            {"hostname": "", "category_id": "1", "api_username": "user 1", "api_key": "key 1"},
             ("invalid", "'discourse_host'", "empty", f"{''!r}"),
             id="hostname empty",
         ),
         pytest.param(
             {
                 "hostname": "http://discourse",
-                "category_id": 1,
+                "category_id": "1",
                 "api_username": "user 1",
                 "api_key": "key 1",
             },
@@ -714,7 +709,7 @@ def test_absolute_url(base_path: str, discourse: Discourse):
         pytest.param(
             {
                 "hostname": "HTTP://discourse",
-                "category_id": 1,
+                "category_id": "1",
                 "api_username": "user 1",
                 "api_key": "key 1",
             },
@@ -724,7 +719,7 @@ def test_absolute_url(base_path: str, discourse: Discourse):
         pytest.param(
             {
                 "hostname": "https://discourse",
-                "category_id": 1,
+                "category_id": "1",
                 "api_username": "user 1",
                 "api_key": "key 1",
             },
@@ -734,12 +729,12 @@ def test_absolute_url(base_path: str, discourse: Discourse):
         pytest.param(
             {
                 "hostname": "discourse",
-                "category_id": None,
+                "category_id": "",
                 "api_username": "user 1",
                 "api_key": "key 1",
             },
-            ("invalid", "'discourse_category_id'", "integer", f"{None!r}"),
-            id="category_id None",
+            ("invalid", "'discourse_category_id'", "it must be non-empty"),
+            id="empty category_id",
         ),
         pytest.param(
             {
@@ -752,22 +747,12 @@ def test_absolute_url(base_path: str, discourse: Discourse):
             id="category_id str that is not convertible to int",
         ),
         pytest.param(
-            {"hostname": "discourse", "category_id": 1, "api_username": None, "api_key": "key 1"},
-            ("invalid", "'discourse_api_username'", "string", f"{None!r}"),
-            id="api_username None",
-        ),
-        pytest.param(
-            {"hostname": "discourse", "category_id": 1, "api_username": "", "api_key": "key 1"},
+            {"hostname": "discourse", "category_id": "1", "api_username": "", "api_key": "key 1"},
             ("empty", "'discourse_api_username'", f"{''!r}"),
             id="api_username empty",
         ),
         pytest.param(
-            {"hostname": "discourse", "category_id": 1, "api_username": "user 1", "api_key": None},
-            ("invalid", "'discourse_api_key'", "string", f"{None!r}"),
-            id="api_key None",
-        ),
-        pytest.param(
-            {"hostname": "discourse", "category_id": 1, "api_username": "user 1", "api_key": ""},
+            {"hostname": "discourse", "category_id": "1", "api_username": "user 1", "api_key": ""},
             ("empty", "'discourse_api_key'", f"{''!r}"),
             id="api_key empty",
         ),
@@ -790,15 +775,6 @@ def test_create_discourse_error(kwargs: dict, expected_error_msg_contents: tuple
 @pytest.mark.parametrize(
     "kwargs",
     [
-        pytest.param(
-            {
-                "hostname": "discourse",
-                "category_id": 1,
-                "api_username": "user 1",
-                "api_key": "key 1",
-            },
-            id="category_id int",
-        ),
         pytest.param(
             {
                 "hostname": "discourse",

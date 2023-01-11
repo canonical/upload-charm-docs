@@ -130,6 +130,8 @@ async def discourse(ops_test: OpsTest, discourse_hostname: str):
         Returns:
             The status of discourse.
         """
+        # to help mypy understand model is not None.
+        assert ops_test.model  # nosec
         return (await ops_test.model.get_status())["applications"]["discourse-k8s"].status[
             "status"
         ]
