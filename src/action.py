@@ -3,6 +3,7 @@
 
 """Module for taking the required actions to match the server state with the local state."""
 
+import difflib
 import logging
 import typing
 
@@ -26,6 +27,26 @@ def _absolute_url(url: types_.Url | None, discourse: Discourse) -> types_.Url | 
         The converted url or None if the url is None.
     """
     return discourse.absolute_url(url=url) if url is not None else None
+
+
+def _log_content_change(old: str, new: str) -> None:
+    """Log the difference between the old and new content, if any.
+
+    Args:
+        old: The previous content.
+        new: The current content.
+    """
+    old = f"{old}\n" if not old.endswith("\n") else old
+    new = f"{new}\n" if not new.endswith("\n") else new
+    if new != old:
+        logging.info(
+            "content change:\n%s",
+            "".join(
+                difflib.Differ().compare(
+                    old.splitlines(keepends=True), new.splitlines(keepends=True)
+                )
+            ),
+        )
 
 
 def _create(
@@ -125,6 +146,13 @@ def _update(
         and action.content_change.new is None
     ):
         raise exceptions.ActionError(f"internal error, new content for page is None, {action=!r}")
+
+    if (
+        action.content_change is not None
+        and action.content_change.old is not None
+        and action.content_change.new is not None
+    ):
+        _log_content_change(old=action.content_change.old, new=action.content_change.new)
 
     if (
         not dry_run
@@ -312,6 +340,7 @@ def _run_index(
         case types_.UpdateIndexAction:
             try:
                 assert isinstance(action, types_.UpdateIndexAction)  # nosec
+                _log_content_change(old=action.content_change.old, new=action.content_change.new)
                 discourse.update_topic(url=action.url, content=action.content_change.new)
                 report = types_.ActionReport(
                     table_row=None, url=action.url, result=types_.ActionResult.SUCCESS, reason=None

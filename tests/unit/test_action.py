@@ -15,6 +15,8 @@ import pytest
 from src import action, discourse, exceptions
 from src import types_ as src_types
 
+from .helpers import assert_substrings_in_string
+
 
 @pytest.mark.parametrize(
     "dry_run",
@@ -42,8 +44,7 @@ def test__create_directory(dry_run: bool, caplog: pytest.LogCaptureFixture):
         action=create_action, discourse=mocked_discourse, dry_run=dry_run, name="name 1"
     )
 
-    assert str(create_action) in caplog.text
-    assert f"dry run: {dry_run}" in caplog.text
+    assert_substrings_in_string((f"action: {create_action}", f"dry run: {dry_run}"), caplog.text)
     mocked_discourse.create_topic.assert_not_called()
     assert returned_report.table_row is not None
     assert returned_report.table_row.level == level
@@ -78,8 +79,7 @@ def test__create_file_dry_run(caplog: pytest.LogCaptureFixture):
         action=create_action, discourse=mocked_discourse, dry_run=True, name="name 1"
     )
 
-    assert str(create_action) in caplog.text
-    assert f"dry run: {True}" in caplog.text
+    assert_substrings_in_string((f"action: {create_action}", f"dry run: {True}"), caplog.text)
     mocked_discourse.create_topic.assert_not_called()
     assert returned_report.table_row is not None
     assert returned_report.table_row.level == level
@@ -111,8 +111,7 @@ def test__create_file_fail(caplog: pytest.LogCaptureFixture):
         action=create_action, discourse=mocked_discourse, dry_run=False, name=(name := "name 1")
     )
 
-    assert str(create_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
+    assert_substrings_in_string((f"action: {create_action}", f"dry run: {False}"), caplog.text)
     mocked_discourse.create_topic.assert_called_once_with(
         title=f"{name} docs: {navlink_title}", content=content
     )
@@ -146,8 +145,7 @@ def test__create_file(caplog: pytest.LogCaptureFixture):
         action=create_action, discourse=mocked_discourse, dry_run=False, name=(name := "name 1")
     )
 
-    assert str(create_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
+    assert_substrings_in_string((f"action: {create_action}", f"dry run: {False}"), caplog.text)
     mocked_discourse.create_topic.assert_called_once_with(
         title=f"{name} docs: {navlink_title}", content=content
     )
@@ -244,8 +242,7 @@ def test__update_directory(dry_run: bool, caplog: pytest.LogCaptureFixture):
         action=update_action, discourse=mocked_discourse, dry_run=dry_run
     )
 
-    assert str(update_action) in caplog.text
-    assert f"dry run: {dry_run}" in caplog.text
+    assert_substrings_in_string((f"action: {update_action}", f"dry run: {dry_run}"), caplog.text)
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is not None
     assert returned_report.table_row.level == level
@@ -277,15 +274,25 @@ def test__update_file_dry_run(caplog: pytest.LogCaptureFixture):
             old=src_types.Navlink(title="title 1", link=(link := "link 1")),
             new=src_types.Navlink(title="title 2", link=link),
         ),
-        content_change=src_types.ContentChange(old="content 1", new="content 2"),
+        content_change=src_types.ContentChange(
+            old=(old_content := "content 1\n"), new=(new_content := "content 2\n")
+        ),
     )
 
     returned_report = action._update(
         action=update_action, discourse=mocked_discourse, dry_run=True
     )
 
-    assert str(update_action) in caplog.text
-    assert f"dry run: {True}" in caplog.text
+    assert_substrings_in_string(
+        (
+            f"action: {update_action}",
+            f"dry run: {True}",
+            old_content,
+            new_content,
+            f"content change:\n- {old_content}?         ^\n+ {new_content}?         ^\n",
+        ),
+        caplog.text,
+    )
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is not None
     assert returned_report.table_row.level == level
@@ -321,8 +328,10 @@ def test__update_file_navlink_title_change(caplog: pytest.LogCaptureFixture):
         action=update_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert str(update_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {update_action}", f"dry run: {False}", content),
+        caplog.text,
+    )
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is not None
     assert returned_report.table_row.level == level
@@ -352,15 +361,25 @@ def test__update_file_navlink_content_change_discourse_error(caplog: pytest.LogC
             old=src_types.Navlink(title="title 1", link=(link := "link 1")),
             new=src_types.Navlink(title="title 2", link=link),
         ),
-        content_change=src_types.ContentChange(old="content 1", new="content 2"),
+        content_change=src_types.ContentChange(
+            old=(old_content := "content 1"), new=(new_content := "content 2")
+        ),
     )
 
     returned_report = action._update(
         action=update_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert str(update_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
+    assert_substrings_in_string(
+        (
+            f"action: {update_action}",
+            f"dry run: {False}",
+            old_content,
+            new_content,
+            f"content change:\n- {old_content}\n?         ^\n+ {new_content}\n?         ^\n",
+        ),
+        caplog.text,
+    )
     assert update_action.content_change is not None
     mocked_discourse.update_topic.assert_called_once_with(
         url=link, content=update_action.content_change.new
@@ -391,15 +410,25 @@ def test__update_file_navlink_content_change(caplog: pytest.LogCaptureFixture):
             old=src_types.Navlink(title="title 1", link=(link := "link 1")),
             new=src_types.Navlink(title="title 2", link=link),
         ),
-        content_change=src_types.ContentChange(old="content 1", new="content 2"),
+        content_change=src_types.ContentChange(
+            old=(old_content := "content 1\n"), new=(new_content := "content 2\n")
+        ),
     )
 
     returned_report = action._update(
         action=update_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert str(update_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
+    assert_substrings_in_string(
+        (
+            f"action: {update_action}",
+            f"dry run: {False}",
+            old_content,
+            new_content,
+            f"content change:\n- {old_content}?         ^\n+ {new_content}?         ^\n",
+        ),
+        caplog.text,
+    )
     assert update_action.content_change is not None
     mocked_discourse.update_topic.assert_called_once_with(
         url=link, content=update_action.content_change.new
@@ -496,9 +525,10 @@ def test__delete_not_delete(
         delete_pages=delete_pages,
     )
 
-    assert str(delete_action) in caplog.text
-    assert f"dry run: {dry_run}" in caplog.text
-    assert f"delete pages: {delete_pages}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {delete_action}", f"dry run: {dry_run}", f"delete pages: {delete_pages}"),
+        caplog.text,
+    )
     mocked_discourse.delete_topic.assert_not_called()
     assert returned_report.table_row is None
     assert returned_report.url == (url if navlink_link else None)
@@ -531,9 +561,9 @@ def test__delete_error(caplog: pytest.LogCaptureFixture):
         delete_pages=True,
     )
 
-    assert str(delete_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"delete pages: {True}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {delete_action}", f"dry run: {False}", f"delete pages: {True}"), caplog.text
+    )
     mocked_discourse.delete_topic.assert_called_once_with(url=link)
     assert returned_report.table_row is None
     assert returned_report.url == url
@@ -565,9 +595,9 @@ def test__delete(caplog: pytest.LogCaptureFixture):
         delete_pages=True,
     )
 
-    assert str(delete_action) in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"delete pages: {True}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {delete_action}", f"dry run: {False}", f"delete pages: {True}"), caplog.text
+    )
     mocked_discourse.delete_topic.assert_called_once_with(url=link)
     assert returned_report.table_row is None
     assert returned_report.url == url
@@ -688,9 +718,9 @@ def test__run_index_dry_run(
         action=index_action, discourse=mocked_discourse, dry_run=True
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {True}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {index_action}", f"dry run: {True}", f"report: {returned_report}"), caplog.text
+    )
     mocked_discourse.create_topic.assert_not_called()
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is None
@@ -717,9 +747,9 @@ def test__run_index_create_error(caplog: pytest.LogCaptureFixture):
         action=index_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {index_action}", f"dry run: {False}", f"report: {returned_report}"), caplog.text
+    )
     mocked_discourse.create_topic.assert_called_once_with(title=title, content=content)
     assert returned_report.table_row is None
     assert returned_report.url == action.FAIL_NAVLINK_LINK
@@ -745,9 +775,9 @@ def test__run_index_create(caplog: pytest.LogCaptureFixture):
         action=index_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {index_action}", f"dry run: {False}", f"report: {returned_report}"), caplog.text
+    )
     mocked_discourse.create_topic.assert_called_once_with(title=title, content=content)
     assert returned_report.table_row is None
     assert returned_report.url == url
@@ -770,9 +800,9 @@ def test__run_index_noop(caplog: pytest.LogCaptureFixture):
         action=index_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
+    assert_substrings_in_string(
+        (f"action: {index_action}", f"dry run: {False}", f"report: {returned_report}"), caplog.text
+    )
     mocked_discourse.create_topic.assert_not_called()
     mocked_discourse.update_topic.assert_not_called()
     assert returned_report.table_row is None
@@ -792,17 +822,26 @@ def test__run_index_update_error(caplog: pytest.LogCaptureFixture):
     mocked_discourse.update_topic.side_effect = (error := exceptions.DiscourseError("failed"))
     index_action = src_types.UpdateIndexAction(
         url=(url := "url 1"),
-        content_change=src_types.IndexContentChange(old="content 1", new=(content := "content 2")),
+        content_change=src_types.IndexContentChange(
+            old=(old_content := "content 1\n"), new=(new_content := "content 2\n")
+        ),
     )
 
     returned_report = action._run_index(
         action=index_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
-    mocked_discourse.update_topic.assert_called_once_with(url=url, content=content)
+    assert_substrings_in_string(
+        (
+            f"action: {index_action}",
+            f"dry run: {False}",
+            f"report: {returned_report}",
+            new_content,
+            f"content change:\n- {old_content}?         ^\n+ {new_content}?         ^\n",
+        ),
+        caplog.text,
+    )
+    mocked_discourse.update_topic.assert_called_once_with(url=url, content=new_content)
     assert returned_report.table_row is None
     assert returned_report.url == url
     assert returned_report.result == src_types.ActionResult.FAIL
@@ -819,17 +858,26 @@ def test__run_index_update(caplog: pytest.LogCaptureFixture):
     mocked_discourse = mock.MagicMock(spec=discourse.Discourse)
     index_action = src_types.UpdateIndexAction(
         url=(url := "url 1"),
-        content_change=src_types.IndexContentChange(old="content 1", new=(content := "content 2")),
+        content_change=src_types.IndexContentChange(
+            old=(old_content := "content 1\n"), new=(new_content := "content 2\n")
+        ),
     )
 
     returned_report = action._run_index(
         action=index_action, discourse=mocked_discourse, dry_run=False
     )
 
-    assert f"action: {index_action}" in caplog.text
-    assert f"dry run: {False}" in caplog.text
-    assert f"report: {returned_report}" in caplog.text
-    mocked_discourse.update_topic.assert_called_once_with(url=url, content=content)
+    assert_substrings_in_string(
+        (
+            f"action: {index_action}",
+            f"dry run: {False}",
+            f"report: {returned_report}",
+            new_content,
+            f"content change:\n- {old_content}?         ^\n+ {new_content}?         ^\n",
+        ),
+        caplog.text,
+    )
+    mocked_discourse.update_topic.assert_called_once_with(url=url, content=new_content)
     assert returned_report.table_row is None
     assert returned_report.url == url
     assert returned_report.result == src_types.ActionResult.SUCCESS
